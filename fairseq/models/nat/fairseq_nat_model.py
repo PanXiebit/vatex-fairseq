@@ -78,6 +78,8 @@ class FairseqNATModel(TransformerModel):
         self.eos = decoder.dictionary.eos()
         self.pad = decoder.dictionary.pad()
         self.unk = decoder.dictionary.unk()
+        self.en_tag = decoder.dictionary.index("<en>")
+        self.ch_tag = decoder.dictionary.index("<ch>")
 
         self.ensemble_models = None
 

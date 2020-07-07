@@ -256,7 +256,7 @@ class VatexTranslationLevenshteinTask(FairseqTask):
             raise NotImplementedError
 
     def build_generator(self, args):
-        from fairseq.iterative_refinement_video_src_generator import IterativeRefinementGenerator
+        from fairseq.iterative_refinement_vatex_generator import IterativeRefinementGenerator
         return IterativeRefinementGenerator(
             self.target_dictionary,
             eos_penalty=getattr(args, 'iter_decode_eos_penalty', 0.0),

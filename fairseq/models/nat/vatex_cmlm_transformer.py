@@ -31,6 +31,7 @@ from fairseq.modules import (
 )
 from typing import Optional, Dict
 from fairseq.models.fairseq_encoder import EncoderOut
+from fairseq.iterative_refinement_generator import DecoderOut
 from fairseq.models.nat import (
     FairseqNATDecoder,
     ensemble_decoder
@@ -149,6 +150,51 @@ class VatexCMLMNATransformerModel(NATransformerModel):
                 "factor": self.decoder.length_loss_factor
             }
         }
+    
+    def initialize_output_tokens(self, encoder_out, src_tokens, tgt_lang):
+        # length prediction
+        length_tgt = self.decoder.forward_length_prediction(
+            self.decoder.forward_length(normalize=True, encoder_out=encoder_out),
+            tgt_lengths=None
+        )
+        print("predict tgt_lengths: ", length_tgt)
+        max_length = length_tgt.clamp_(min=2).max()
+        idx_length = utils.new_arange(src_tokens, max_length)
+
+        positions = torch.arange(1, max_length + 1)[None, :].repeat(src_tokens.size(0), 1).to(src_tokens.device)
+        positions.masked_fill_(idx_length[None, :] + 1 > length_tgt[:, None], 0)
+     
+        initial_output_tokens = src_tokens.new_zeros(
+            src_tokens.size(0), max_length
+        ).long().fill_(self.pad)
+        initial_output_tokens.masked_fill_(
+            idx_length[None, :] < length_tgt[:, None], self.unk
+        )
+        initial_output_tokens[:, 0] = self.bos
+        if tgt_lang == "en":
+            initial_output_tokens[:, 1] = self.en_tag
+            langs =  src_tokens.new_zeros(src_tokens.size(0), max_length).long()
+        elif tgt_lang == "ch":
+            initial_output_tokens[:, 1] = self.ch_tag
+            langs =  src_tokens.new_ones(src_tokens.size(0), max_length).long()
+        else:
+            assert tgt_lang == ("en", "ch")
+            pass
+        initial_output_tokens.scatter_(1, length_tgt[:, None] - 1, self.eos)
+        initial_output_scores = initial_output_tokens.new_zeros(
+            *initial_output_tokens.size()
+        ).type_as(encoder_out.encoder_out)
+        
+        
+        
+        return langs, positions, DecoderOut(
+            output_tokens=initial_output_tokens,
+            output_scores=initial_output_scores,
+            attn=None,
+            step=0,
+            max_step=0,
+            history=None
+        )
 
     def forward_decoder(self, decoder_out, encoder_out, positions, langs, decoding_format=None, **kwargs):
 
@@ -219,6 +265,48 @@ class VatexEncoder(FairseqEncoder):
             encoder_padding_mask=None,  # B x T
             encoder_embedding=None,  # B x T x C
             encoder_states=None,  # List[T x B x C]
+        )
+    
+    @torch.jit.export
+    def reorder_encoder_out(self, encoder_out: EncoderOut, new_order):
+        """
+        Reorder encoder output according to *new_order*.
+
+        Args:
+            encoder_out: output from the ``forward()`` method
+            new_order (LongTensor): desired order
+
+        Returns:
+            *encoder_out* rearranged according to *new_order*
+        """
+        new_encoder_out: Dict[str, Tensor] = {}
+
+        new_encoder_out["encoder_out"] = (
+            encoder_out.encoder_out
+            if encoder_out.encoder_out is None
+            else encoder_out.encoder_out.index_select(1, new_order)
+        )
+        new_encoder_out["encoder_padding_mask"] = (
+            encoder_out.encoder_padding_mask
+            if encoder_out.encoder_padding_mask is None
+            else encoder_out.encoder_padding_mask.index_select(0, new_order)
+        )
+        new_encoder_out["encoder_embedding"] = (
+            encoder_out.encoder_embedding
+            if encoder_out.encoder_embedding is None
+            else encoder_out.encoder_embedding.index_select(0, new_order)
+        )
+
+        encoder_states = encoder_out.encoder_states
+        if encoder_states is not None:
+            for idx, state in enumerate(encoder_states):
+                encoder_states[idx] = state.index_select(1, new_order)
+
+        return EncoderOut(
+            encoder_out=new_encoder_out["encoder_out"],  # T x B x C
+            encoder_padding_mask=new_encoder_out["encoder_padding_mask"],  # B x T
+            encoder_embedding=new_encoder_out["encoder_embedding"],  # B x T x C
+            encoder_states=encoder_states,  # List[T x B x C]
         )
 
 

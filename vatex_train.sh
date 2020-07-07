@@ -1,5 +1,5 @@
 python -m train \
-    Data/test_small \
+    Data/bpe_data \
     --dataset-impl raw \
     --save-dir checkpoints \
     --ddp-backend=no_c10d \
@@ -8,7 +8,7 @@ python -m train \
     --arch vatex_cmlm_transformer \
     --noise random_mask \
     --share-all-embeddings \
-    --max-source-positions 400 \
+    --max-source-positions 100 \
     --max-target-positions 250 \
     --optimizer adam --adam-betas '(0.9,0.98)' \
     --lr 0.0005 --lr-scheduler inverse_sqrt \
@@ -20,10 +20,11 @@ python -m train \
     --apply-bert-init \
     --log-format 'simple' --log-interval 100 \
     --fixed-validation-seed 7 \
-    --max-tokens 800 \
+    --max-tokens 14000 \
     --save-interval-updates 10000 \
     --max-update 300000 \
-    --update-freq 8 \
-    --restore-file checkpoints_v2/checkpoint9.pt \
-
+    --restore-file checkpoints/checkpoint54.pt
+    
+    
+    
 # Tip: # max-source-positions=400, 1 samples have invalid sizes and will be skipped
