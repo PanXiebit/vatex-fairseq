@@ -172,14 +172,6 @@ def train(args, trainer, task, epoch_itr):
     valid_subsets = args.valid_subset.split(',')
     max_update = args.max_update or math.inf
     for samples in progress:
-        # print(samples[0].keys(), samples[0]["net_input"].keys())
-        # print("nlang", samples[0]["nlang"], "lang_id", samples[0]["lang_id"])
-        # print("langs", samples[0]["langs"], "\n", "position", samples[0]["position"])
-        # # print(samples[0]["net_input"]["src_videos"].shape)
-        # print(samples[0]["net_input"]["src_lengths"])
-        # print(samples[0]["net_input"]["prev_output_tokens"])
-        # print(samples[0]["target"], samples[0]["tgt_lengths"])
-        # exit()
         with metrics.aggregate('train_inner'):
             log_output = trainer.train_step(samples)
             if log_output is None:  # OOM, overflow, ...

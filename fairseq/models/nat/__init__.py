@@ -7,3 +7,4 @@ from .levenshtein_transformer import *
 from .insertion_transformer import *
 from .video_levenshtein_transformer import *
 from .vatex_cmlm_transformer import *
+from .vatex_noun_text_transformer import *

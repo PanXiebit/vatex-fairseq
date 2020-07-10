@@ -640,7 +640,73 @@ class VatexIndexedRawTextDataset(FairseqDataset):
     def exists(path):
         return os.path.exists(path)
 
+class IndexedRawNNTextDataset(FairseqDataset):
+    """Takes a text file as input and binarizes it in memory at instantiation.
+    Original lines are also kept in memory"""
 
+    def __init__(self, path, tgt_dict, append_eos=True, reverse_order=False):
+        self.nn_tokens_list = []
+        self.tgt_tokens_list = []
+        self.nn_lines = []
+        self.tgt_lines = []
+        self.sizes = []
+        self.append_eos = append_eos
+        self.reverse_order = reverse_order
+        self.read_data(path, tgt_dict)
+        self.size = len(self.tgt_tokens_list)
+
+    def read_data(self, path, tgt_dict):
+        with open(path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip().split(" ||| ")
+                self.nn_lines.append(line[0])
+                self.tgt_lines.append(line[1])
+                nn_tokens = tgt_dict.encode_line(
+                    line[0], add_if_not_exist=False,
+                    append_eos=False, reverse_order=self.reverse_order,
+                ).long()
+                tgt_tokens = tgt_dict.encode_line(
+                    line[1], add_if_not_exist=False,
+                    append_eos=self.append_eos, reverse_order=self.reverse_order,
+                ).long()
+                self.tgt_tokens_list.append(tgt_tokens)
+                self.nn_tokens_list.append(nn_tokens)
+                self.sizes.append(len(tgt_tokens))
+        self.sizes = np.array(self.sizes)
+
+    def check_index(self, i):
+        if i < 0 or i >= self.size:
+            raise IndexError('index out of range')
+
+    @lru_cache(maxsize=8)
+    def get_tgt_tokens(self, i):
+        self.check_index(i)
+        return self.tgt_tokens_list[i]
+
+    @lru_cache(maxsize=8)
+    def get_nn_tokens(self, i):
+        self.check_index(i)
+        return self.nn_tokens_list[i]
+
+    def get_original_text(self, i):
+        self.check_index(i)
+        return self.lines[i]
+
+    def __del__(self):
+        pass
+
+    def __len__(self):
+        return self.size
+
+    def num_tokens(self, index):
+        return self.sizes[index]
+
+    def size(self, index):
+        return self.sizes[index]
+
+    @staticmethod
+    def exists(path):
+        return os.path.exists(path)
 
 
 
