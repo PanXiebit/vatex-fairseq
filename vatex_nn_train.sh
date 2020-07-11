@@ -1,5 +1,5 @@
 python -m train \
-    Data/vid-nnen/test \
+    Data/vid-nnen \
     --dataset-impl raw \
     --save-dir checkpoints \
     --ddp-backend=no_c10d \
@@ -20,11 +20,10 @@ python -m train \
     --apply-bert-init \
     --log-format 'simple' --log-interval 100 \
     --fixed-validation-seed 7 \
-    --max-tokens 14000 \
+    --max-tokens 4200 \
     --save-interval-updates 10000 \
     --max-update 300000 \
-    --restore-file checkpoints/checkpoint54.pt
-    
+    --restore-file checkpoints/checkpoint13.pt    
     
     
 # Tip: # max-source-positions=400, 1 samples have invalid sizes and will be skipped

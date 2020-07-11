@@ -1,12 +1,10 @@
 import nltk
 from tqdm import tqdm
-import enchant
 
-en_d = enchant.Dict("en_US")
-
+#
 # for split in ["train", "valid"]:
 #     with open("Data/separate_data/%s.vid-en.en"%split, "r") as f, \
-#             open("Data/separate_data/%s.vid-nnen.nnen"%split, "w") as fw:
+#             open("Data/vid-nnen/%s.vid-nnen.nnen"%split, "w") as fw:
 #         for i, line in tqdm(enumerate(f)):
 #             text = line.strip().split()
 #             pos_tagged = nltk.pos_tag(text)
@@ -29,7 +27,7 @@ from collections import defaultdict
 nn_dict = defaultdict(int)
 tgt_dict = defaultdict(int)
 #
-with open("Data/separate_data/train.vid-nnen.nnen", "r") as f:
+with open("Data/vid-nnen/train.vid-nnen.nnen", "r") as f:
     for i, line in enumerate(f):
         content = line.strip().split(" ||| ")
         assert len(content) == 2
@@ -45,10 +43,11 @@ sorted_tgt_dict = sorted(tgt_dict.items(), key=lambda item: item[1], reverse=Tru
 print("nn vocabulary size: ", len(nn_dict))  # 18170  好多错别字
 print("tgt vocabulry size: ", len(tgt_dict)) # 27147
 
-with open("Data/separate_data/dict.nn.txt", "w") as f:
+with open("Data/vid-nnen/dict.nn.txt", "w") as f:
     for word, cnt in sorted_nn_dict:
         f.write(word + " " + str(cnt) + "\n")
 
-with open("Data/separate_data/dict.nnen.txt", "w") as f:
+with open("Data/vid-nnen/dict.nnen.txt", "w") as f:
     for word, cnt in sorted_tgt_dict:
         f.write(word + " " + str(cnt) + "\n")
+

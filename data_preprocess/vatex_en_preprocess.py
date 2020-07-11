@@ -34,9 +34,9 @@ def tokenize(sent):
 if __name__ == "__main__":
     for split in ["train", "valid"]:
         if split == "train":
-            corpus = "/home/wang/px/video-guided-mt/data/vatex_training_v1.0.json"
+            corpus = "/root/VatexData/vatex_training_v1.0.json"
         elif split == "valid":
-            corpus = "/home/wang/px/video-guided-mt/data/vatex_validation_v1.0.json"
+            corpus = "/root/VatexData/vatex_validation_v1.0.json"
         else:
             corpus = None
         with open(corpus, "r") as f:
@@ -51,7 +51,7 @@ if __name__ == "__main__":
                 en_sents = text["enCap"]
                 ch_sents = text["chCap"]
                 assert len(en_sents) == len(ch_sents) == 10
-                vid_path = os.path.join("/home/wang/px/video-guided-mt/data/trainval", text["videoID"])
+                vid_path = os.path.join("/root/VatexData/trainval", text["videoID"])
                 for j in range(10):
                     fw1.write(vid_path + "\n")
                     fw2.write(tokenize(en_sents[j].lower()) + "\n")
